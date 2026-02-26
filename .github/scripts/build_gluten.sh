@@ -35,43 +35,39 @@ log() {
     local log_level="$1"
     local log_message="$2"
     local timestamp=$(date +'%Y-%m-%d %H:%M:%S')
-
-    # 仅输出指定级别及以上的日志
-    if [[ "$LOG_LEVEL" == "INFO" ]] || [[ "$log_level" == "ERROR" ]]; then
-        echo "[$timestamp] [$log_level] $log_message"
-    fi
+    echo "[$timestamp] [$log_level] $log_message"
 }
 
 # 函数：检查Docker依赖（是否安装+是否运行）
 check_docker_dependency() {
-    log "INFO" "开始检查Docker环境依赖..."
+    echo "开始检查Docker环境依赖..."
 
     # 检查Docker是否安装
     if ! command -v docker &> /dev/null; then
-        log "ERROR" "Docker未安装，请先安装Docker后再执行脚本！"
+        echo "Docker未安装，请先安装Docker后再执行脚本！"
         exit 1
     fi
 
     # 检查Docker服务是否运行
     if ! docker info &> /dev/null; then
-        log "ERROR" "Docker服务未运行，请执行 'systemctl start docker' 启动服务后再试！"
+        echo "Docker服务未运行，请执行 'systemctl start docker' 启动服务后再试！"
         exit 1
     fi
 
     # 检查是否支持多架构（qemu）
     if ! docker run --rm --platform linux/arm64 alpine:latest uname -m &> /dev/null; then
-        log "INFO" "检测到需要安装 qemu 以支持 arm64 架构"
+        echo "检测到需要安装 qemu 以支持 arm64 架构"
         # 尝试安装 qemu
         if command -v apt-get &> /dev/null; then
             sudo apt-get update && sudo apt-get install -y qemu-user-static
         elif command -v yum &> /dev/null; then
             sudo yum install -y qemu-user-static
         else
-            log "WARNING" "无法自动安装 qemu，请手动安装以支持 arm64 架构"
+            echo "无法自动安装 qemu，请手动安装以支持 arm64 架构"
         fi
     fi
 
-    log "INFO" "Docker环境依赖检查通过"
+    echo "Docker环境依赖检查通过"
 }
 
 # 函数：检查容器是否存在
@@ -89,16 +85,16 @@ cleanup_container() {
     local container_name="$1"
 
     if is_container_exists "$container_name"; then
-        log "INFO" "清理旧容器 [$container_name]..."
+        echo "清理旧容器 [$container_name]..."
 
         # 停止容器（忽略停止失败，比如容器已停止）
         if docker stop "$container_name" &> /dev/null; then
-            log "INFO" "容器 [$container_name] 已停止"
+            echo "容器 [$container_name] 已停止"
         fi
 
         # 删除容器（忽略删除失败）
         if docker rm "$container_name" &> /dev/null; then
-            log "INFO" "容器 [$container_name] 已删除"
+            echo "容器 [$container_name] 已删除"
         fi
     fi
 }
@@ -108,7 +104,7 @@ cleanup_container() {
 create_local_directory() {
     local dir_path="$1"
     if [[ ! -d "$dir_path" ]]; then
-        log "INFO" "创建本地目录 [$dir_path]..."
+        echo "创建本地目录 [$dir_path]..."
         mkdir -p "$dir_path"
     fi
 }
@@ -119,19 +115,19 @@ create_local_directory() {
 
 # 函数：拉取华为云SWR公开镜像
 pull_swr_public_image() {
-    log "INFO" "开始拉取SWR公开镜像：$SWR_PUBLIC_IMAGE"
+    echo "开始拉取SWR公开镜像：$SWR_PUBLIC_IMAGE"
 
     if docker pull "$SWR_PUBLIC_IMAGE"; then
-        log "INFO" "SWR镜像拉取成功"
+        echo "SWR镜像拉取成功"
     else
-        log "ERROR" "SWR镜像拉取失败！请检查：1.镜像地址是否正确 2.网络是否能访问华为云SWR"
+        echo "SWR镜像拉取失败！请检查：1.镜像地址是否正确 2.网络是否能访问华为云SWR"
         exit 1
     fi
 }
 
 # 函数：启动构建容器（挂载本地目录，保持后台运行）
 start_build_container() {
-    log "INFO" "启动构建容器 [$BUILD_CONTAINER_NAME]..."
+    echo "启动构建容器 [$BUILD_CONTAINER_NAME]..."
 
     # 创建本地产物目录
     create_local_directory "$LOCAL_BUILD_OUTPUT_DIR"
@@ -151,16 +147,16 @@ start_build_container() {
 
     # 验证容器是否启动成功
     if is_container_exists "$BUILD_CONTAINER_NAME" && docker ps --filter "name=^/${BUILD_CONTAINER_NAME}$" --format "{{.Names}}" | grep -q "^${BUILD_CONTAINER_NAME}$"; then
-        log "INFO" "构建容器 [$BUILD_CONTAINER_NAME] 启动成功"
+        echo "构建容器 [$BUILD_CONTAINER_NAME] 启动成功"
     else
-        log "ERROR" "构建容器启动失败！请检查镜像是否可正常运行"
+        echo "构建容器启动失败！请检查镜像是否可正常运行"
         exit 1
     fi
 }
 
 # 函数：拉取代码到容器内（指定分支）
 pull_code_to_container() {
-    log "INFO" "拉取代码 [$CODE_REPOSITORY] 到容器，分支：$CODE_BRANCH..."
+    echo "拉取代码 [$CODE_REPOSITORY] 到容器，分支：$CODE_BRANCH..."
 
     # 容器内执行git操作：确保目录为空后克隆，已有仓库则拉取
     docker exec -u root "$BUILD_CONTAINER_NAME" bash -c "\
@@ -171,13 +167,13 @@ pull_code_to_container() {
         git checkout $CODE_BRANCH; \
     "
 
-    log "INFO" "代码拉取完成，存放路径：$CONTAINER_CODE_DIR"
+    echo "代码拉取完成，存放路径：$CONTAINER_CODE_DIR"
 }
 
 # 函数：执行容器内的构建脚本
 execute_build_script() {
     local full_build_script_path="$CONTAINER_CODE_DIR/$CONTAINER_BUILD_SCRIPT"
-    log "INFO" "执行构建脚本：$full_build_script_path"
+    echo "执行构建脚本：$full_build_script_path"
 
     # 容器内执行构建：添加执行权限 + 运行脚本
     docker exec "$BUILD_CONTAINER_NAME" bash -c "\
@@ -190,7 +186,7 @@ execute_build_script() {
         $full_build_script_path package;
     "
 
-    log "INFO" "构建脚本执行完成！构建产物已同步到本地：$LOCAL_BUILD_OUTPUT_DIR"
+    echo "构建脚本执行完成！构建产物已同步到本地：$LOCAL_BUILD_OUTPUT_DIR"
 }
 
 # ==============================================================================
@@ -201,17 +197,17 @@ execute_build_script() {
 cleanup_on_exit() {
     local exit_code=$?
     if [[ $exit_code -ne 0 ]]; then
-        log "ERROR" "脚本执行失败，退出码：$exit_code"
+        echo "脚本执行失败，退出码：$exit_code"
         # 失败时可选择保留容器用于排查问题，注释下面的行即可
         cleanup_container "$BUILD_CONTAINER_NAME"
     else
-        log "INFO" "脚本执行成功！如需清理容器，可执行：docker stop $BUILD_CONTAINER_NAME && docker rm $BUILD_CONTAINER_NAME"
+        echo "脚本执行成功！如需清理容器，可执行：docker stop $BUILD_CONTAINER_NAME && docker rm $BUILD_CONTAINER_NAME"
     fi
 }
 
 # 函数：脚本主入口（按流程串联所有步骤）
 main() {
-    log "INFO" "==================== 开源项目一键构建脚本启动 ===================="
+    echo "==================== 开源项目一键构建脚本启动 ===================="
 
     # 步骤1：检查依赖
     check_docker_dependency
@@ -231,7 +227,7 @@ main() {
     # 步骤6：执行构建脚本
     execute_build_script
 
-    log "INFO" "==================== 开源项目一键构建脚本完成 ===================="
+    echo "==================== 开源项目一键构建脚本完成 ===================="
 }
 
 # 执行主函数（脚本入口）
