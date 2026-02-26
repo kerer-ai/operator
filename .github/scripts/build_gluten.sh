@@ -28,15 +28,7 @@ readonly LOCAL_BUILD_MAVEN_REPO_DIR="./maven-docker-cache"
 # 【工具函数区】- 通用工具函数，职责单一，可复用
 # ==============================================================================
 
-# 函数：打印带级别和时间戳的日志
-# 参数1：日志级别（INFO/ERROR）
-# 参数2：日志内容
-log() {
-    local log_level="$1"
-    local log_message="$2"
-    local timestamp=$(date +'%Y-%m-%d %H:%M:%S')
-    echo "[$timestamp] [$log_level] $log_message"
-}
+
 
 # 函数：检查Docker依赖（是否安装+是否运行）
 check_docker_dependency() {
