@@ -148,10 +148,10 @@ start_build_container() {
 
 # 函数：拉取代码到容器内（指定分支）
 pull_code_to_container() {
-    log "INFO" "拉取代码 [$CODE_REPOSITORY] 到容器，分支：$CODE_BRANCH..."
+    echo "拉取代码 [$CODE_REPOSITORY] 到容器，分支：$CODE_BRANCH..."
 
     # 容器内执行git操作：确保目录为空后克隆，已有仓库则拉取
-    docker exec -u root "$BUILD_CONTAINER_NAME" bash -c "\
+    docker exec -t -u root "$BUILD_CONTAINER_NAME" bash -c "\
         set -euo pipefail; \
         rm -rf $CONTAINER_CODE_DIR; \
         git clone $CODE_REPOSITORY $CONTAINER_CODE_DIR; \
@@ -159,7 +159,7 @@ pull_code_to_container() {
         git checkout $CODE_BRANCH; \
     "
 
-    log "INFO" "代码拉取完成，存放路径：$CONTAINER_CODE_DIR"
+    echo "代码拉取完成，存放路径：$CONTAINER_CODE_DIR"
 }
 
 # 函数：执行容器内的构建脚本
@@ -168,7 +168,7 @@ execute_build_script() {
     echo "执行构建脚本：$full_build_script_path"
 
     # 容器内执行构建：添加执行权限 + 运行脚本
-    docker exec "$BUILD_CONTAINER_NAME" bash -c "\
+    docker exec -t "$BUILD_CONTAINER_NAME" bash -c "\
         set -euo pipefail; \
         if [[ ! -f $full_build_script_path ]]; then
             echo '构建脚本不存在！路径：$full_build_script_path';
