@@ -148,7 +148,7 @@ start_build_container() {
 
 # 函数：拉取代码到容器内（指定分支）
 pull_code_to_container() {
-    echo "拉取代码 [$CODE_REPOSITORY] 到容器，分支：$CODE_BRANCH..."
+    log "INFO" "拉取代码 [$CODE_REPOSITORY] 到容器，分支：$CODE_BRANCH..."
 
     # 容器内执行git操作：确保目录为空后克隆，已有仓库则拉取
     docker exec -u root "$BUILD_CONTAINER_NAME" bash -c "\
@@ -159,7 +159,7 @@ pull_code_to_container() {
         git checkout $CODE_BRANCH; \
     "
 
-    echo "代码拉取完成，存放路径：$CONTAINER_CODE_DIR"
+    log "INFO" "代码拉取完成，存放路径：$CONTAINER_CODE_DIR"
 }
 
 # 函数：执行容器内的构建脚本
