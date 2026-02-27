@@ -92,7 +92,6 @@ jobs:
             git clone https://gitcode.com/openeuler/libboundscheck.git && pushd /opt/libboundscheck && git checkout tags/v1.1.16 && popd; \
             rm -rf /opt/BoostKit_CI; \
             git clone https://codehub.devcloud.cn-north-4.huaweicloud.com/Kunpeng_BoostKit00001/BoostKit_CI.git /opt/BoostKit_CI; \
-            chmod 755 BoostKit_CI/script/bigdata/Gluten_compile.sh && dos2unix BoostKit_CI/script/bigdata/Gluten_compile.sh && sh BoostKit_CI/script/bigdata/Gluten_compile.sh package; \
         "
         echo "代码拉取完成，存放路径：/opt/"
 

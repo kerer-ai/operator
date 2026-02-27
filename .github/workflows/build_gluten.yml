@@ -1,25 +1,25 @@
-name: Build Gluten
+# name: Build Gluten
 
-on:
-  # push:
-    # branches: [ main, master ]
+# on:
+#   # push:
+#     # branches: [ main, master ]
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout current repo
-      uses: actions/checkout@v3
+#     steps:
+#     - name: Checkout current repo
+#       uses: actions/checkout@v3
 
-    - name: Make build script executable
-      run: chmod +x .github/scripts/build_gluten.sh
+#     - name: Make build script executable
+#       run: chmod +x .github/scripts/build_gluten.sh
 
-    - name: Build Gluten
-      run: .github/scripts/build_gluten.sh
+#     - name: Build Gluten
+#       run: .github/scripts/build_gluten.sh
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: gluten-artifacts
-        path: build-output/*.zip
+#     - name: Upload artifacts
+#       uses: actions/upload-artifact@v4
+#       with:
+#         name: gluten-artifacts
+#         path: build-output/*.zip
