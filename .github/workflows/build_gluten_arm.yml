@@ -6,16 +6,22 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest-arm64
+    runs-on: ubuntu-latest
 
     steps:
+    - name: Checkout current repo
+      uses: actions/checkout@v3
+
+    - name: Set up QEMU for multi-arch support
+      uses: docker/setup-qemu-action@v3
+
     - name: Build and run ARM container
       run: |
         # 拉取 ARM64 镜像
         docker pull swr.cn-north-4.myhuaweicloud.com/cloud_boostkit/openeuler22.03_lts_sp3:arm64_003
 
         # 启动容器并执行构建
-        docker run --rm \
+        docker run --rm --platform linux/arm64 \
           -v "${{ github.workspace }}:/opt/build" \
           --workdir "/opt" \
           swr.cn-north-4.myhuaweicloud.com/cloud_boostkit/openeuler22.03_lts_sp3:arm64_003 \
