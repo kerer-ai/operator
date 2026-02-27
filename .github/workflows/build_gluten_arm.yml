@@ -15,40 +15,101 @@ jobs:
     - name: Set up QEMU for multi-arch support
       uses: docker/setup-qemu-action@v3
 
-    - name: Build and run ARM container
+    - name: Check Docker dependency
       run: |
-        # 拉取 ARM64 镜像
-        docker pull swr.cn-north-4.myhuaweicloud.com/cloud_boostkit/openeuler22.03_lts_sp3:arm64_003
+        echo "开始检查Docker环境依赖..."
+        # 检查Docker是否安装
+        if ! command -v docker &> /dev/null; then
+            echo "Docker未安装，请先安装Docker后再执行脚本！"
+            exit 1
+        fi
+        # 检查Docker服务是否运行
+        if ! docker info &> /dev/null; then
+            echo "Docker服务未运行，请执行 'systemctl start docker' 启动服务后再试！"
+            exit 1
+        fi
+        echo "Docker环境依赖检查通过"
 
-        # 启动容器并执行构建
-        docker run --rm --platform linux/arm64 \
-          -v "${{ github.workspace }}:/opt/build" \
-          --workdir "/opt" \
-          swr.cn-north-4.myhuaweicloud.com/cloud_boostkit/openeuler22.03_lts_sp3:arm64_003 \
-          bash -c "\
+    - name: Clean up old container
+      run: |
+        echo "清理旧容器..."
+        if docker ps -a --filter "name=^/gluten-project-builder$" --format "{{.Names}}" | grep -q "^gluten-project-builder$"; then
+            echo "停止容器 gluten-project-builder..."
+            docker stop gluten-project-builder &> /dev/null || true
+            echo "删除容器 gluten-project-builder..."
+            docker rm gluten-project-builder &> /dev/null || true
+        fi
+
+    - name: Pull SWR public image
+      run: |
+        echo "开始拉取SWR公开镜像：swr.cn-north-4.myhuaweicloud.com/cloud_boostkit/openeuler22.03_lts_sp3:arm64_003"
+        if docker pull swr.cn-north-4.myhuaweicloud.com/cloud_boostkit/openeuler22.03_lts_sp3:arm64_003; then
+            echo "SWR镜像拉取成功"
+        else
+            echo "SWR镜像拉取失败！请检查：1.镜像地址是否正确 2.网络是否能访问华为云SWR"
+            exit 1
+        fi
+
+    - name: Create local directories
+      run: |
+        echo "创建本地目录..."
+        mkdir -p build-output
+        mkdir -p maven-docker-cache
+
+    - name: Start build container
+      run: |
+        echo "启动构建容器 gluten-project-builder..."
+        docker run -d \
+            --name gluten-project-builder \
+            --platform linux/arm64 \
+            --user root \
+            --entrypoint /bin/sh \
+            -v "${{ github.workspace }}/build-output:/opt/toCMC" \
+            -v "${{ github.workspace }}/maven-docker-cache:/root/.m2" \
+            --workdir "/opt" \
+            swr.cn-north-4.myhuaweicloud.com/cloud_boostkit/openeuler22.03_lts_sp3:arm64_003 \
+            -c "tail -f /dev/null"
+
+        # 验证容器是否启动成功
+        if docker ps --filter "name=^/gluten-project-builder$" --format "{{.Names}}" | grep -q "^gluten-project-builder$"; then
+            echo "构建容器 gluten-project-builder 启动成功"
+        else
+            echo "构建容器启动失败！请检查镜像是否可正常运行"
+            exit 1
+        fi
+
+    - name: Pull code to container
+      run: |
+        echo "拉取代码 https://gitcode.com/kerer-sk/Gluten.git 到容器，分支：master..."
+        docker exec -t -u root gluten-project-builder bash -c "\
             set -euo pipefail; \
-            # 拉取代码到容器内
-            echo '拉取代码 https://gitcode.com/kerer-sk/Gluten.git 到容器，分支：master...';
-            rm -rf /opt/gluten;
-            git clone https://gitcode.com/kerer-sk/Gluten.git /opt/gluten;
-            cd /opt/gluten;
-            git checkout master;
-            echo '代码拉取完成，存放路径：/opt/gluten';
+            rm -rf /opt/gluten; \
+            git clone https://gitcode.com/kerer-sk/Gluten.git /opt/gluten; \
+            cd /opt/gluten; \
+            git checkout master; \
+        "
+        echo "代码拉取完成，存放路径：/opt/gluten"
 
-            # 执行构建脚本
-            local full_build_script_path='/opt/gluten/.build/scripts/gluten_compile.sh';
-            echo '执行构建脚本：$full_build_script_path';
+    - name: Execute build script
+      run: |
+        local full_build_script_path='/opt/gluten/.build/scripts/gluten_compile.sh'
+        echo "执行构建脚本：$full_build_script_path"
+        docker exec -t gluten-project-builder bash -c "\
+            set -euo pipefail; \
             if [[ ! -f $full_build_script_path ]]; then
                 echo '构建脚本不存在！路径：$full_build_script_path';
                 exit 1;
-            fi;
-            chmod +x $full_build_script_path;
+            fi; \
+            chmod +x $full_build_script_path; \
             $full_build_script_path package;
-            echo '构建脚本执行完成！';
+        "
+        echo "构建脚本执行完成！构建产物已同步到本地：build-output"
 
-            # 复制构建产物到挂载目录
-            cp -r /opt/toCMC/* /opt/build/build-output/;
-          "
+    - name: Clean up container
+      run: |
+        echo "清理容器..."
+        docker stop gluten-project-builder &> /dev/null || true
+        docker rm gluten-project-builder &> /dev/null || true
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
