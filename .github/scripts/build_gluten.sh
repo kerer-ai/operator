@@ -10,7 +10,7 @@ readonly SWR_PUBLIC_IMAGE="swr.cn-north-4.myhuaweicloud.com/cloud_boostkit/opene
 # 构建容器名称（建议包含项目标识，避免冲突）
 readonly BUILD_CONTAINER_NAME="gluten-project-builder"
 # 代码仓库地址（支持HTTP/SSH，如GitHub/Gitee/GitLab）
-readonly CODE_REPOSITORY="https://gitcode.com/kerer-sk/Gluten.git"
+readonly CODE_REPOSITORY="https://github.com/kerer-ai/operator.git"
 # 代码仓库分支（可根据需要修改，如main/dev/v1.0.0）
 readonly CODE_BRANCH="master"
 # 容器内代码存放目录（绝对路径，建议/opt/项目名）
@@ -123,7 +123,7 @@ start_build_container() {
     create_local_directory "$LOCAL_BUILD_OUTPUT_DIR"
     # 创建本地Maven仓库目录
     create_local_directory "$LOCAL_BUILD_MAVEN_REPO_DIR"
-    
+
     docker run -d \
         --name "$BUILD_CONTAINER_NAME" \
         --platform linux/arm64 \
@@ -133,7 +133,7 @@ start_build_container() {
         -v "$LOCAL_BUILD_MAVEN_REPO_DIR:/root/.m2" \
         --workdir "/opt" \
         "$SWR_PUBLIC_IMAGE" \
-        -c "tail -f /dev/null" 
+        -c "tail -f /dev/null"
 
     # 验证容器是否启动成功
     if is_container_exists "$BUILD_CONTAINER_NAME" && docker ps --filter "name=^/${BUILD_CONTAINER_NAME}$" --format "{{.Names}}" | grep -q "^${BUILD_CONTAINER_NAME}$"; then
