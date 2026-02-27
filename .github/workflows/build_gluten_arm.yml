@@ -30,15 +30,16 @@ jobs:
         fi
         echo "Docker环境依赖检查通过"
 
-    - name: Clean up old container
-      run: |
-        echo "清理旧容器..."
-        if docker ps -a --filter "name=^/gluten-project-builder$" --format "{{.Names}}" | grep -q "^gluten-project-builder$"; then
-            echo "停止容器 gluten-project-builder..."
-            docker stop gluten-project-builder &> /dev/null || true
-            echo "删除容器 gluten-project-builder..."
-            docker rm gluten-project-builder &> /dev/null || true
-        fi
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Cache Docker layers
+      uses: actions/cache@v4
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ hashFiles('**/Dockerfile') }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
 
     - name: Pull SWR public image
       run: |
@@ -104,12 +105,6 @@ jobs:
             $full_build_script_path package;
         "
         echo "构建脚本执行完成！构建产物已同步到本地：build-output"
-
-    - name: Clean up container
-      run: |
-        echo "清理容器..."
-        docker stop gluten-project-builder &> /dev/null || true
-        docker rm gluten-project-builder &> /dev/null || true
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
