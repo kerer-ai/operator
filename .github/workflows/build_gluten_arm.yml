@@ -6,17 +6,11 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        arch: [arm64]
+    runs-on: [self-hosted, linux, arm64]
 
     steps:
     - name: Checkout current repo
       uses: actions/checkout@v3
-
-    - name: Set up QEMU for multi-arch support
-      uses: docker/setup-qemu-action@v3
 
     - name: Build and run ARM container
       run: |
@@ -24,15 +18,12 @@ jobs:
         docker pull swr.cn-north-4.myhuaweicloud.com/cloud_boostkit/openeuler22.03_lts_sp3:arm64_003
 
         # 启动容器并执行构建
-        docker run --rm --platform linux/arm64 \
+        docker run --rm \
           -v "${{ github.workspace }}:/opt/build" \
           --workdir "/opt" \
           swr.cn-north-4.myhuaweicloud.com/cloud_boostkit/openeuler22.03_lts_sp3:arm64_003 \
           bash -c "\
             set -euo pipefail; \
-            # 安装必要的构建依赖
-            yum install -y git gcc g++ make cmake maven; \
-
             # 拉取代码到容器内
             echo '拉取代码 https://gitcode.com/kerer-sk/Gluten.git 到容器，分支：master...';
             rm -rf /opt/gluten;
