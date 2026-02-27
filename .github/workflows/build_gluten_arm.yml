@@ -26,15 +26,34 @@ jobs:
         # 启动容器并执行构建
         docker run --rm --platform linux/arm64 \
           -v "${{ github.workspace }}:/opt/build" \
-          --workdir "/opt/build" \
+          --workdir "/opt" \
           swr.cn-north-4.myhuaweicloud.com/cloud_boostkit/openeuler22.03_lts_sp3:arm64_003 \
           bash -c "\
             set -euo pipefail; \
             # 安装必要的构建依赖
-            yum install -y git gcc g++ make cmake; \
+            yum install -y git gcc g++ make cmake maven; \
+
+            # 拉取代码到容器内
+            echo '拉取代码 https://gitcode.com/kerer-sk/Gluten.git 到容器，分支：master...';
+            rm -rf /opt/gluten;
+            git clone https://gitcode.com/kerer-sk/Gluten.git /opt/gluten;
+            cd /opt/gluten;
+            git checkout master;
+            echo '代码拉取完成，存放路径：/opt/gluten';
+
             # 执行构建脚本
-            chmod +x .github/scripts/build_gluten.sh; \
-            .github/scripts/build_gluten.sh; \
+            local full_build_script_path='/opt/gluten/.build/scripts/gluten_compile.sh';
+            echo '执行构建脚本：$full_build_script_path';
+            if [[ ! -f $full_build_script_path ]]; then
+                echo '构建脚本不存在！路径：$full_build_script_path';
+                exit 1;
+            fi;
+            chmod +x $full_build_script_path;
+            $full_build_script_path package;
+            echo '构建脚本执行完成！';
+
+            # 复制构建产物到挂载目录
+            cp -r /opt/gluten/build-output/* /opt/build/build-output/;
           "
 
     - name: Upload artifacts
