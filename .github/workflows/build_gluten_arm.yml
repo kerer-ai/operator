@@ -47,7 +47,7 @@ jobs:
             echo '构建脚本执行完成！';
 
             # 复制构建产物到挂载目录
-            cp -r /opt/gluten/build-output/* /opt/build/build-output/;
+            cp -r /opt/toCMC/* /opt/build/build-output/;
           "
 
     - name: Upload artifacts
