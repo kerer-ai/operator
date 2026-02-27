@@ -10,7 +10,7 @@ readonly SWR_PUBLIC_IMAGE="swr.cn-north-4.myhuaweicloud.com/cloud_boostkit/opene
 # 构建容器名称（建议包含项目标识，避免冲突）
 readonly BUILD_CONTAINER_NAME="gluten-project-builder"
 # 代码仓库地址（支持HTTP/SSH，如GitHub/Gitee/GitLab）
-readonly CODE_REPOSITORY="https://github.com/kerer-ai/operator.git"
+readonly CODE_REPOSITORY="https://gitcode.com/kerer-sk/Gluten.git"
 # 代码仓库分支（可根据需要修改，如main/dev/v1.0.0）
 readonly CODE_BRANCH="master"
 # 容器内代码存放目录（绝对路径，建议/opt/项目名）
@@ -129,7 +129,7 @@ start_build_container() {
         --platform linux/arm64 \
         --user root \
         --entrypoint /bin/sh \
-        -v "$LOCAL_BUILD_OUTPUT_DIR:/opt/build-output" \
+        -v "$LOCAL_BUILD_OUTPUT_DIR:/opt/toCMC" \
         -v "$LOCAL_BUILD_MAVEN_REPO_DIR:/root/.m2" \
         --workdir "/opt" \
         "$SWR_PUBLIC_IMAGE" \
