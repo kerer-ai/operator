@@ -17,3 +17,19 @@ jobs:
 
     - name: Build Gluten
       run: .github/scripts/build_gluten.sh
+
+    - name: Copy artifacts from container
+      run: |
+        # 确保本地构建产物目录存在
+        mkdir -p build-output
+        # 从容器中复制产物到本地目录
+        docker cp ${BUILD_CONTAINER_NAME}:/opt/toCMC/. build-output/
+      env:
+        BUILD_CONTAINER_NAME: gluten-project-builder
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: gluten-artifacts
+        path: build-output/*.zip
+        if-no-files-found: warn
