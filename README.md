@@ -47,3 +47,23 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is licensed under the MIT License.
+
+## README Refresher Skill
+
+This project includes a `readme-refresher` skill that automatically updates README files after code modifications.
+
+### Usage
+
+Invoke this skill:
+- After completing code modifications that affect functionality described in README
+- When adding new features that need documentation updates
+- Before committing changes to ensure README is current
+- When refactoring code that changes how features work
+
+### Benefits
+
+- Ensures documentation accuracy
+- Saves time on manual README updates
+- Prevents documentation drift from code changes
+- Maintains consistency between code and documentation
+- Improves project maintainability
