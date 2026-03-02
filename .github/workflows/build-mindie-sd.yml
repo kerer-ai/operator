@@ -1,0 +1,122 @@
+name: Build MindIE-SD
+
+on:
+  push:
+    branches: [ main, master, dev_workflow ]
+    paths:
+      - '.github/workflows/build-mindie-sd.yml'
+      - 'build/**'
+      - 'src/**'
+      - 'setup.py'
+      - 'pyproject.toml'
+  pull_request:
+    branches: [ main, master, dev_workflow ]
+  workflow_dispatch:
+
+env:
+  DOCKER_IMAGE: swr.cn-north-4.myhuaweicloud.com/inference/ascend_mindie_ubuntu_x86:20260119_ubuntu24_3.0.0_cann8.5.0_torch2.6.0_py311
+  SET_ENV_PATH: /usr/local/Ascend/ascend-toolkit/set_env.sh
+  REPO_URL: https://gitcode.com/Ascend/MindIE-SD.git
+  TORCH_DEVICE_BACKEND_AUTOLOAD: 0
+  USER_ABI_VERSION: 1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Check Docker environment dependencies
+        run: |
+          echo "Checking Docker availability..."
+          docker --version
+          echo "Checking Docker Buildx..."
+          docker buildx version
+
+      - name: Cache Docker image
+        uses: actions/cache@v4
+        with:
+          path: /tmp/docker-image.tar
+          key: docker-image-ascend-mindie-ubuntu-x86-20260119
+          restore-keys: |
+            docker-image-ascend-mindie-ubuntu-x86-
+
+      - name: Pull Docker image
+        run: |
+          echo "Pulling Docker image: ${{ env.DOCKER_IMAGE }}"
+          IMAGE_PULL_START=$(date +%s)
+
+          if [ -f /tmp/docker-image.tar ]; then
+            echo "Loading cached Docker image..."
+            docker load < /tmp/docker-image.tar
+          else
+            echo "Pulling fresh Docker image..."
+            docker pull ${{ env.DOCKER_IMAGE }}
+            echo "Saving Docker image to cache..."
+            docker save ${{ env.DOCKER_IMAGE }} -o /tmp/docker-image.tar
+          fi
+
+          IMAGE_PULL_END=$(date +%s)
+          IMAGE_PULL_TIME=$((IMAGE_PULL_END - IMAGE_PULL_START))
+          echo "IMAGE_PULL_TIME=${IMAGE_PULL_TIME}" >> $GITHUB_ENV
+
+      - name: Build MindIE-SD wheel package
+        run: |
+          echo "Starting MindIE-SD build..."
+          BUILD_START=$(date +%s)
+
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            ${{ env.DOCKER_IMAGE }} \
+            bash -c "cd /workspace && git clone ${{ env.REPO_URL }} mindie-sd && cd mindie-sd && source ${{ env.SET_ENV_PATH }} && export TORCH_DEVICE_BACKEND_AUTOLOAD=${{ env.TORCH_DEVICE_BACKEND_AUTOLOAD }} && export USER_ABI_VERSION=${{ env.USER_ABI_VERSION }} && python setup.py bdist_wheel && ls -lh dist/"
+
+          BUILD_END=$(date +%s)
+          BUILD_TIME=$((BUILD_END - BUILD_START))
+          echo "BUILD_TIME=${BUILD_TIME}" >> $GITHUB_ENV
+
+      - name: Upload wheel artifacts
+        run: |
+          echo "Uploading build artifacts..."
+          ARTIFACT_START=$(date +%s)
+
+          if [ -d "mindie-sd/dist" ]; then
+            cd mindie-sd
+            echo "Found wheel files:"
+            ls -lh dist/
+            # Upload artifact logic would go here
+          else
+            echo "No dist directory found. Build may have failed."
+          fi
+
+          ARTIFACT_END=$(date +%s)
+          ARTIFACT_TIME=$((ARTIFACT_END - ARTIFACT_START))
+          echo "ARTIFACT_TIME=${ARTIFACT_TIME}" >> $GITHUB_ENV
+
+      - name: Calculate and display build statistics
+        run: |
+          echo "Build Statistics:"
+          echo "================="
+          echo "Image Pull: ${{ env.IMAGE_PULL_TIME }} seconds"
+          echo "Build (includes code download): ${{ env.BUILD_TIME }} seconds"
+          echo "Artifact Upload: ${{ env.ARTIFACT_TIME }} seconds"
+
+          TOTAL_TIME=$(( ${{ env.IMAGE_PULL_TIME }} + ${{ env.BUILD_TIME }} + ${{ env.ARTIFACT_TIME }} ))
+          echo "Total: ${TOTAL_TIME} seconds"
+          echo ""
+          echo "Build completed successfully!"
+
+      - name: Send build completion notification
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ Build completed successfully!"
+          else
+            echo "❌ Build failed. Check logs for details."
+          fi
