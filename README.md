@@ -1,69 +1,75 @@
 # GitHub Action Operator
 
-This project provides GitHub Action workflows for building and managing Gluten projects.
+此项目提供用于构建和管理 Gluten 项目的 GitHub Action 工作流。
 
-## Project Structure
+## 项目结构
 
-- `.github/scripts/` - Build scripts
-- `.github/workflows/` - GitHub Action workflows
-- `.trae/` - Trae configuration
+- `.github/workflows/` - GitHub Action 工作流
+- `.trae/` - Trae 配置
+  - `rules/` - 规则配置
+  - `skills/` - 技能配置
 
-## Available Workflows
+## 可用工作流
 
-- `build_gluten_arm.yml` - Builds Gluten for ARM architecture
-  - **Trigger**: Push to main or master branches
-  - **Runner**: Ubuntu latest
-  - **Steps**:
-    1. Checkout current repo
-    2. Set up QEMU for multi-arch support
-    3. Check Docker dependency
-    4. Set up Docker Buildx
-    5. Cache Docker layers
-    6. Pull SWR public image
-    7. Create local directories
-    8. Start build container
-    9. Pull code to container (Gluten, OmniOperator, libboundscheck, BoostKit_CI)
-    10. Execute build script
-    11. Copy artifact from container
-    12. Upload artifacts
-  - **Artifacts**: `gluten-artifacts-arm` (gluten.zip)
+- `build_gluten_arm.yml` - 为 ARM 架构构建 Gluten
+  - **触发条件**：推送到 main 或 master 分支
+  - **运行器**：最新版 Ubuntu
+  - **步骤**：
+    1. 检出当前仓库
+    2. 设置 QEMU 以支持多架构
+    3. 检查 Docker 依赖
+    4. 设置 Docker Buildx
+    5. 缓存 Docker 层
+    6. 拉取 SWR 公共镜像
+    7. 创建本地目录
+    8. 启动构建容器
+    9. 拉取代码到容器（Gluten、OmniOperator、libboundscheck、BoostKit_CI）
+    10. 执行构建脚本
+    11. 从容器复制构建产物
+    12. 上传构建产物
+  - **产物**：`gluten-artifacts-arm` (gluten.zip)
 
-## Build Scripts
+## 使用方法
 
-- `build_gluten.sh` - Script for building Gluten
+要使用此仓库中的工作流：
 
-## Usage
+1. Fork 此仓库
+2. 根据需要修改工作流
+3. 通过 GitHub Actions 触发工作流
 
-To use the workflows in this repository:
+## 贡献
 
-1. Fork this repository
-2. Modify the workflows as needed
-3. Trigger the workflows via GitHub Actions
+欢迎贡献！请随时提交 Pull Request。
 
-## Contributing
+## 许可证
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+此项目采用 MIT 许可证。
 
-## License
+## README 刷新器技能
 
-This project is licensed under the MIT License.
+此项目包含一个 `readme-refresher` 技能，可在代码修改后自动更新 README 文件。
 
-## README Refresher Skill
+### 使用时机
 
-This project includes a `readme-refresher` skill that automatically updates README files after code modifications.
+调用此技能：
+- 完成影响 README 中描述的功能的代码修改后
+- 添加需要文档更新的新功能时
+- 提交更改前确保 README 是最新的
+- 重构改变功能工作方式的代码时
 
-### Usage
+### 优势
 
-Invoke this skill:
-- After completing code modifications that affect functionality described in README
-- When adding new features that need documentation updates
-- Before committing changes to ensure README is current
-- When refactoring code that changes how features work
+- 确保文档准确性
+- 节省手动更新 README 的时间
+- 防止文档与代码变化脱节
+- 保持代码与文档之间的一致性
+- 提高项目可维护性
 
-### Benefits
+## 代码推送规则
 
-- Ensures documentation accuracy
-- Saves time on manual README updates
-- Prevents documentation drift from code changes
-- Maintains consistency between code and documentation
-- Improves project maintainability
+此项目包含一个代码推送规则，确保每次代码修改都会：
+1. 触发 README 刷新技能
+2. 执行 AI 检查
+3. 处理自动提交到远程仓库的操作
+
+详细工作流程请参考 `.trae/rules/push-code.md` 文件。

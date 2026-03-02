@@ -1,40 +1,40 @@
 ---
 name: "readme-refresher"
-description: "Automatically refreshes README files after code modifications. Invoke when code changes require updating documentation or when user wants to ensure README is synchronized with code."
+description: "代码修改后自动刷新 README 文件。当代码变更需要更新文档或用户希望确保 README 与代码同步时调用。"
 ---
 
-# README Refresher
+# README 刷新器
 
-This skill helps maintain up-to-date README files by automatically refreshing them after code modifications. It ensures that documentation remains synchronized with the actual codebase.
+此技能通过在代码修改后自动刷新 README 文件，帮助维护最新的文档。它确保文档与实际代码库保持同步。
 
-## When to Use
+## 使用时机
 
-Invoke this skill:
-- After completing code modifications that affect functionality described in README
-- When adding new features that need documentation updates
-- Before committing changes to ensure README is current
-- When refactoring code that changes how features work
+调用此技能：
+- 完成影响 README 中描述的功能的代码修改后
+- 添加需要文档更新的新功能时
+- 提交更改前确保 README 是最新的
+- 重构改变功能工作方式的代码时
 
-## How It Works
+## 工作原理
 
-1. Detects changes in code files
-2. Analyzes what parts of the README might need updates
-3. Suggests or automatically applies changes to keep documentation in sync
-4. Verifies that README accurately reflects current code functionality
+1. 检测代码文件中的变化
+2. 分析 README 中可能需要更新的部分
+3. 建议或自动应用更改以保持文档同步
+4. 验证 README 准确反映当前代码功能
 
-## Usage Example
+## 使用示例
 
-After modifying code that changes the CLI interface:
+修改更改 CLI 界面的代码后：
 
-1. Run the README refresher skill
-2. It will detect changes in CLI-related code
-3. Update README sections that document CLI commands and options
-4. Provide a summary of changes made
+1. 运行 README 刷新器技能
+2. 它将检测 CLI 相关代码的变化
+3. 更新记录 CLI 命令和选项的 README 部分
+4. 提供所做更改的摘要
 
-## Benefits
+## 优势
 
-- Ensures documentation accuracy
-- Saves time on manual README updates
-- Prevents documentation drift from code changes
-- Maintains consistency between code and documentation
-- Improves project maintainability
+- 确保文档准确性
+- 节省手动更新 README 的时间
+- 防止文档与代码变化脱节
+- 保持代码与文档之间的一致性
+- 提高项目可维护性
